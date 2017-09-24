@@ -7,11 +7,13 @@ from datetime import datetime, timedelta
 import pickle
 
 import rot13cbc
+
 BLOCK_SIZE_BYTES = 4
 
 TIME_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 START_TIME = datetime.now()
 
+REQUEST_COOKIE_INDEX = 376
 request_template = Template("""GET /nonexistent/$suffix HTTP/1.1
 Host: localhost:5000
 Connection: keep-alive
@@ -50,7 +52,7 @@ def encrypt(plain, iv):
 
 
 def generate_req_and_res(index: int):
-    return make_unique_request(index) + make_unique_response(index)
+    return (make_unique_request(index),  make_unique_response(index))
 
 
 def generate_n_rounds(count):
@@ -60,13 +62,27 @@ def generate_n_rounds(count):
 
     return roundTrips
 
-def encrypt_round(round_text):
-    iv = os.urandom(BLOCK_SIZE_BYTES)
-    encrypted = encrypt(round_text, iv)
+
+def encrypt_round(round_trip):
+    req = round_trip[0]
+    req_iv = os.urandom(BLOCK_SIZE_BYTES)
+    req_encrypted = encrypt(req, req_iv)
+
+    res = round_trip[1]
+    res_iv = os.urandom(BLOCK_SIZE_BYTES)
+    res_encrypted = encrypt(res, res_iv)
+
     return {
-        "cipher": encrypted,
-        "iv": iv,
+        "request": {
+            "cipher": req_encrypted,
+            "iv": req_iv,
+        },
+        "response": {
+            "cipher": res_encrypted,
+            "iv": res_iv
+        }
     }
+
 
 def main(count: int, file: str):
     rounds = generate_n_rounds(count)
@@ -74,6 +90,7 @@ def main(count: int, file: str):
 
     with open(file, 'wb') as f:
         pickle.dump(encrypted, f)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate N encrypted packets')
