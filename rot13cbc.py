@@ -14,7 +14,7 @@ class Rot13cbc:
     def _byteRot13Dec(self, b):
         return (b - 13) % 255
 
-    def encrypt(self, plain: str):
+    def encrypt(self, plain: str) -> [bytes]:
         plain = plain.encode() # encode to binary
 
         length = len(plain)
