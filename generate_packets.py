@@ -68,16 +68,18 @@ def encrypt_round(round_text):
         "iv": iv,
     }
 
+def main(count: int, file: str):
+    rounds = generate_n_rounds(count)
+    encrypted = [encrypt_round(r) for r in rounds]
+
+    with open(file, 'wb') as f:
+        pickle.dump(encrypted, f)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate N encrypted packets')
     parser.add_argument('count', metavar='N', type=int, help="Number of requests to send")
-    parser.add_argument('--file', '-f', type=str, help="File to write packets to")
+    parser.add_argument('--file', '-f', type=str, required=True, help="File to write packets to")
 
     args = parser.parse_args()
 
-    rounds = generate_n_rounds(args.count)
-    encrypted = [encrypt_round(r) for r in rounds]
-
-    with open(args.file, 'wb') as f:
-        pickle.dump(encrypted, f)
+    main(args.count, args.file)
