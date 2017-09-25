@@ -13,7 +13,6 @@ BLOCK_SIZE_BYTES = 4
 TIME_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 START_TIME = datetime.now()
 
-REQUEST_COOKIE_INDEX = 376
 request_template = Template("""GET /nonexistent/$suffix HTTP/1.1
 Host: localhost:5000
 Connection: keep-alive
@@ -21,7 +20,7 @@ User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
 Accept-Encoding: gzip, deflate, br
 Accept-Language: en-US,en;q=0.8
-Cookie: session=DEADBEEF-CAFE-FADE-FEED-DEADBEEF
+Cookie: session=$cookie
 """)
 
 response_template = Template("""HTTP/1.0 404 NOT FOUND
@@ -36,8 +35,10 @@ Date: $date
 """)
 
 
-def make_unique_request(index: int):
-    return request_template.substitute(suffix="{:010d}".format(index))
+def make_unique_request(index: int, cookie: str):
+    return request_template.substitute(
+        suffix="{:010d}".format(index),
+        cookie=cookie)
 
 
 def make_unique_response(index: int):
@@ -51,14 +52,14 @@ def encrypt(plain, iv):
     return Rot13.encrypt(plain)
 
 
-def generate_req_and_res(index: int):
-    return (make_unique_request(index),  make_unique_response(index))
+def generate_req_and_res(index: int, cookie: str):
+    return (make_unique_request(index, cookie),  make_unique_response(index))
 
 
-def generate_n_rounds(count):
+def generate_n_rounds(count, cookie):
     roundTrips = []
     for i in range(count):
-        roundTrips.append(generate_req_and_res(i))
+        roundTrips.append(generate_req_and_res(i, cookie))
 
     return roundTrips
 
@@ -83,9 +84,12 @@ def encrypt_round(round_trip):
         }
     }
 
+def format_cookie(cookie: str):
+    # truncate to 32 characters and pad to 32 characters if smaller
+    return "{:32s}".format(cookie[0:32])
 
-def main(count: int, file: str):
-    rounds = generate_n_rounds(count)
+def main(count: int, file: str, cookie: str):
+    rounds = generate_n_rounds(count, cookie)
     encrypted = [encrypt_round(r) for r in rounds]
 
     with open(file, 'wb') as f:
@@ -97,8 +101,12 @@ if __name__ == "__main__":
     parser.add_argument('count', metavar='N', type=int,
                         help="Number of requests to send. A good value is 20000")
     parser.add_argument('--file', '-f', type=str, required=True,
-                        help="File to write packets to")
+                        help="File to write encrypted packets to (in python pickle format)")
 
+    parser.add_argument('--cookie', type=str, default="DEADBEEF-CAFE-FADE-FEED-DEADBEEF",
+                        help="The cookie to retrieve. Will be truncated/padded to 32 chars")
     args = parser.parse_args()
 
-    main(args.count, args.file)
+    cookie = format_cookie(args.cookie)
+
+    main(args.count, args.file, cookie)
