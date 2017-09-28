@@ -9,10 +9,10 @@ class Rot13cbc:
         assert self.blockSizeBytes == len(self.iv)
 
     def _byteRot13En(self, b):
-        return (b + 13) % 255
+        return (b + 13) % 256
 
     def _byteRot13Dec(self, b):
-        return (b - 13) % 255
+        return (b - 13) % 256
 
     def encrypt(self, plain: str) -> [bytes]:
         plain = plain.encode() # encode to binary

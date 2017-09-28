@@ -10,9 +10,10 @@ We use the terrible rot13cbc algorithm for this attack.
 class Sour16Attack:
 
     COOKIE_LOCATION = range(94, 103)
+    INDEX_LOCATION = range(4, 7)
     DATE_LOCATION = range(27, 35)
     KNOWN_PLAIN_TEXTS = {
-        "request": ['GET ', '/non', 'exis', 'tent', '/000', '0000', '000 ', 'HTTP', '/1.1', '\nHos',
+        "request": ['GET ', '/non', 'exis', 'tent', '/???', '????', '??? ', 'HTTP', '/1.1', '\nHos',
                     't: l', 'ocal', 'host', ':500', '0\nCo', 'nnec', 'tion', ': ke', 'ep-a', 'live',
                     '\nUse', 'r-Ag', 'ent:', ' Moz', 'illa', '/5.0', ' (X1', '1; L', 'inux', ' x86',
                     '_64)', ' App', 'leWe', 'bKit', '/537', '.36 ', '(KHT', 'ML, ', 'like', ' Gec',
@@ -47,7 +48,7 @@ class Sour16Attack:
         for round_trip in encrypted_round_trips:
             request = round_trip['request']  # object has 'cipher' and 'iv'
             for i in range(len(request['cipher'])):
-                if i in self.COOKIE_LOCATION:
+                if i in self.COOKIE_LOCATION or i in self.INDEX_LOCATION:
                     continue
 
                 if request['cipher'][i] in self.encrypted_cookie_blocks:
@@ -99,6 +100,7 @@ class Sour16Attack:
         cookie_prev = cookie_block["prev"]
         cookie_plain = self._find_plaintext_from_collision(plain, prev, cookie_prev)
         plain_cookie[cookie_block["index"]] = cookie_plain
+        # print(plain, prev, cookie_prev, cipher[block_index], cookie_plain)
 
     @staticmethod
     def _find_plaintext_from_collision(plain, prev_cipher, prev_cookie):
