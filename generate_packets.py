@@ -4,7 +4,7 @@ import argparse
 from string import Template
 import os
 from datetime import datetime, timedelta
-import pickle
+import packetfile
 
 import rot13cbc
 
@@ -92,8 +92,7 @@ def main(count: int, file: str, cookie: str):
     rounds = generate_n_rounds(count, cookie)
     encrypted = [encrypt_round(r) for r in rounds]
 
-    with open(file, 'wb') as f:
-        pickle.dump(encrypted, f)
+    packetfile.write_packets(encrypted, file)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 #! env python
 
 import argparse
-import pickle
+import packetfile
 
 """Sour16 tries to do a birthday attack on 32 bit blocks.
 We use the terrible rot13cbc algorithm for this attack.
@@ -9,6 +9,7 @@ We use the terrible rot13cbc algorithm for this attack.
 
 class Sour16Attack:
 
+    BLOCK_SIZE_BYTES = 4
     COOKIE_LOCATION = range(94, 103)
     INDEX_LOCATION = range(4, 7)
     DATE_LOCATION = range(27, 35)
@@ -34,9 +35,8 @@ class Sour16Attack:
                      'n th', 'e se', 'rver', '.</p', '>\n']
     }
 
-    def __init__(self, picked_filename):
-        with open(picked_filename, 'rb') as f:
-            self.round_trips = pickle.load(f)
+    def __init__(self, filename):
+        self.round_trips = packetfile.read_packets(filename, self.BLOCK_SIZE_BYTES)
 
         self.encrypted_cookie_blocks = self._find_encrypted_cookie_blocks(self.round_trips)
         print('Some Encrypted cookie blocks look like this: ', list(self.encrypted_cookie_blocks.keys())[:5])
