@@ -1,4 +1,4 @@
-#! env python
+#!/usr/bin/env python3
 
 import argparse
 from string import Template
@@ -97,15 +97,15 @@ def main(count: int, file: str, cookie: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate N encrypted packets')
-    parser.add_argument('count', metavar='N', type=int,
-                        help="Number of requests to send. A good value is 20000")
-    parser.add_argument('--file', '-f', type=str, required=True,
+    parser.add_argument('file', type=str,
                         help="File to write encrypted packets to (in python pickle format)")
 
+    parser.add_argument('--count', metavar='N', type=int, default=20,
+                        help="Number of requests to send (in 1000s). Defaults to 20 to create 20k requests")
     parser.add_argument('--cookie', type=str, default="DEADBEEF-CAFE-FADE-FEED-DEADBEEF",
-                        help="The cookie to retrieve. Will be truncated/padded to 32 chars")
+                        help="The value of the cookie written in each request. Will be truncated/padded to 32 chars")
     args = parser.parse_args()
 
     cookie = format_cookie(args.cookie)
 
-    main(args.count, args.file, cookie)
+    main(args.count*1000, args.file, cookie)

