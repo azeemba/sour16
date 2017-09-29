@@ -8,8 +8,6 @@ import packetfile
 
 import rot13cbc
 
-BLOCK_SIZE_BYTES = 4
-
 TIME_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 START_TIME = datetime.now()
 
@@ -48,7 +46,7 @@ def make_unique_response(index: int):
 
 
 def encrypt(plain, iv):
-    Rot13 = rot13cbc.Rot13cbc(BLOCK_SIZE_BYTES, iv)
+    Rot13 = rot13cbc.Rot13cbc(len(iv), iv)
     return Rot13.encrypt(plain)
 
 
@@ -64,13 +62,13 @@ def generate_n_rounds(count, cookie):
     return roundTrips
 
 
-def encrypt_round(round_trip):
+def encrypt_round(round_trip, block_size_bytes):
     req = round_trip[0]
-    req_iv = os.urandom(BLOCK_SIZE_BYTES)
+    req_iv = os.urandom(block_size_bytes)
     req_encrypted = encrypt(req, req_iv)
 
     res = round_trip[1]
-    res_iv = os.urandom(BLOCK_SIZE_BYTES)
+    res_iv = os.urandom(block_size_bytes)
     res_encrypted = encrypt(res, res_iv)
 
     return {
@@ -88,9 +86,9 @@ def format_cookie(cookie: str):
     # truncate to 32 characters and pad to 32 characters if smaller
     return "{:32s}".format(cookie[0:32])
 
-def main(count: int, file: str, cookie: str):
+def main(count: int, file: str, cookie: str, block_size_bytes: int):
     rounds = generate_n_rounds(count, cookie)
-    encrypted = [encrypt_round(r) for r in rounds]
+    encrypted = [encrypt_round(r, block_size_bytes) for r in rounds]
 
     packetfile.write_packets(encrypted, file)
 
@@ -104,8 +102,11 @@ if __name__ == "__main__":
                         help="Number of requests to send (in 1000s). Defaults to 20 to create 20k requests")
     parser.add_argument('--cookie', type=str, default="DEADBEEF-CAFE-FADE-FEED-DEADBEEF",
                         help="The value of the cookie written in each request. Will be truncated/padded to 32 chars")
+
+    parser.add_argument('--block-size', type=int, default=4,
+                        help="Block size in bytes. Defaults to 4 bytes for 32 bit block.")
     args = parser.parse_args()
 
     cookie = format_cookie(args.cookie)
 
-    main(args.count*1000, args.file, cookie)
+    main(args.count*1000, args.file, cookie, args.block_size)
