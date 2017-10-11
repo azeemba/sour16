@@ -4,8 +4,8 @@ import argparse
 from string import Template
 import os
 from datetime import datetime, timedelta
-import packetfile
 
+import packetfile
 import rot13cbc
 
 TIME_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
@@ -74,10 +74,12 @@ def encrypt_round(round_trip, block_size_bytes):
     return {
         "request": {
             "cipher": req_encrypted,
+            "plain_length": len(req),
             "iv": req_iv,
         },
         "response": {
             "cipher": res_encrypted,
+            "plain_length": len(res),
             "iv": res_iv
         }
     }

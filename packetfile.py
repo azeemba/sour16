@@ -46,6 +46,7 @@ class _PacketFile:
         size = len(combined_bytes)
         self.handle.write(self._int2byte(size))
         self.handle.write(combined_bytes)
+        self.handle.write(self._int2byte(trip["plain_length"]))
 
 
     def read(self, block_size):
@@ -75,9 +76,13 @@ class _PacketFile:
         for i in range(0, size, block_size):
             blocks.append(read_bytes[i:i + block_size])
 
+        plain_length_bytes = self.handle.read(INT_SIZE_BYTES)
+        plain_length = self._bytes2int(plain_length_bytes)
+
         return {
             "iv": iv_bytes,
-            "cipher": blocks
+            "cipher": blocks,
+            "plain_length": plain_length
         }
 
     @staticmethod

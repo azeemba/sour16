@@ -16,6 +16,7 @@ class Rot13cbc:
 
     def encrypt(self, plain: str) -> [bytes]:
         plain = plain.encode() # encode to binary
+        padding_char = 0
 
         length = len(plain)
         blocks = []
@@ -27,6 +28,8 @@ class Rot13cbc:
                 index = i + j
                 if index < length:
                     block.append(self._byteRot13En(plain[index] ^ prev_block[j]))
+                else:
+                    block.append(self._byteRot13En(padding_char ^ prev_block[j]))
 
             blocks.append(bytes(block))
 
