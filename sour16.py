@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-import packetfile
+from lib import packetfile
 import math
 
 """Sour16 tries to do a birthday attack on 32 bit blocks.

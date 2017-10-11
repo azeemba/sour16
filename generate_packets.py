@@ -5,8 +5,8 @@ from string import Template
 import os
 from datetime import datetime, timedelta
 
-import packetfile
-import rot13cbc
+from lib import packetfile
+from lib import rot13cbc
 
 TIME_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 START_TIME = datetime.now()
