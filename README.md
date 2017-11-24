@@ -28,7 +28,7 @@ the block size.
 
 Example command:
 
-```
+```sh
 ./generate_packets.py --count 30 --cookie "SECRET COOKIE" --block-size 4 30k-32bit.out
 # creates a file called 30k-32bit.out
 # creates 30,000 encrypted packets with a 4 bytes (32 bit) block size
